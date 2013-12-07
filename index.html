@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head id="head">
+    <meta charset="UTF-8" />
+    <meta name="viewport" id="chaoBaiDa" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="Description" content="" />
+    <title>主页面</title>
+</head>
+<body>
+    <div>我是主页面</div>
+    <div><input id="messageValue" /><input id="send" type="button" value="发送" /></div>
+    <div><iframe id="bFrame" src="http://localhost:6800/static/navy/subindex.html"></iframe></div>
+</body>
+<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="cross.js"></script>
+<script type="text/javascript">
+    $(function(){
+        //主页面
+        Cross.addEventListener(function(crossData){
+            alert(crossData.data);
+        });//响应外部嵌入页面
+        $("#send").click(function(){
+            Cross.postMessage($("#messageValue").val(),document.getElementById("bFrame").contentWindow);
+        });
+    })
+</script>
+</html>
