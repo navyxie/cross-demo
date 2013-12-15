@@ -7,22 +7,46 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="Description" content="" />
     <title>iframe</title>
+    <style type="text/css">
+        *{
+            margin:0;
+            padding:0;
+        }
+    </style>
 </head>
 <body>
-    <div>我是iframe页面</div>
-    <div><input id="messageValue" /><input id="send" type="button" value="发送" /></div>
+    <div>我是一级iframe页面</div>
+    <div><input id="shareValue" /><input id="sendShare" type="button" value="发送share" /></div>
+    <div><input id="likeValue" /><input id="sendLike" type="button" value="发送like" /></div>
+    <div id="shareContent"></div>
+    <div id="likeContent"></div>
 </body>
 <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
-<script type="text/javascript" src="cross.js"></script>
+<script type="text/javascript" src="demo/c_messenger.js"></script>
 <script type="text/javascript">
     $(function(){
         //嵌入页面
-        $("#send").click(function(){
-            Cross.postMessage($("#messageValue").val());
-        });//通知主页面
-        Cross.addEventListener(function(crossData){
-            alert(crossData.data);
-        }); //响应主页面通知
+        $("#sendShare").click(function(){
+            KLG.share(
+                {
+                    'content':'this is share content:'+$('#shareValue').val(),
+                    'cbf':function(data){$('#shareContent').append('<p>'+data+'</p>');}
+                }
+            );
+            $('#shareContent').append('<p>'+'this is share content:'+$('#shareValue').val()+'</p>');
+        });
+        $("#sendLike").click(function(){
+            KLG.like(
+                {
+                    'content':'this is like content:'+$('#likeValue').val(),
+                    'cbf':function(data){$('#likeContent').append('<p>'+data+'</p>');}
+                }
+            );
+            $('#likeContent').append('<p>'+'this is share content:'+$('#likeValue').val()+'</p>');
+        });
+        setInterval(function(){
+            KLG.setHeight($('body').height());
+        },1000)
     })
 </script>
 </html>
