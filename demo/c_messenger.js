@@ -112,14 +112,32 @@ var messenger = (function(){
     return Messenger;
 })();
 var noop = function(){};
+var cbfs = {};
+var isInit = false;
 var console = window.console || {log:noop};
 var msgObj = new messenger('iframe');
 msgObj.addTarget(window.parent,'parent');
 window.KLG = {
+    init:function(){
+        var self = this;
+        if(!isInit){
+            isInit = true;
+            msgObj.listen(function(msg){
+                msg = JSON.parse(msg);
+                cbfs[msg.name](msg.data);
+            });
+        }     
+    },
     share:function(data){
+        var cbfKey = 'share-cbf';
+        cbfs[cbfKey] = data.cbf || noop;
+        data.cbf = cbfKey;
         msgObj.send(JSON.stringify({'name':'share','data':data}));
     },
     like:function(data){
+        var cbfKey = 'like-cbf';
+        cbfs[cbfKey] = data.cbf || noop;
+        data.cbf = cbfKey;
         msgObj.send(JSON.stringify({'name':'like','data':data}));
     },
     setHeight:function(data){
@@ -127,3 +145,4 @@ window.KLG = {
         msgObj.send(JSON.stringify({'name':'setHeight','data':{height:data}}));
     }
 }
+window.KLG.init();

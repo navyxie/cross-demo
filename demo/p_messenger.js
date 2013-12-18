@@ -137,17 +137,20 @@ window.KLG = {
         self['_handler']['setHeight'] = this.setHeight
     },
     share:function(data){
-        console.log(data);
+        // console.log(data);
+        msgObj.send(JSON.stringify({name:data.cbf,data:data}));
         //data.cbf(data.content);
-        console.log('share function is called');
+        // console.log('share function is called');
     },
     like:function(data){
+        // console.log(data);
+        msgObj.send(JSON.stringify({name:data.cbf,data:data}));
         //data.cbf(data.content);
-        console.log('like function is called');
+        // console.log('like function is called');
     },
     setHeight:function(data){
         bFrame.style.height = data.height+'px';
-        console.log('setHeight function is called');
+        // console.log('setHeight function is called');
     }
 }
 window.KLG.init();

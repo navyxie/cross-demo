@@ -30,19 +30,17 @@
             KLG.share(
                 {
                     'content':'this is share content:'+$('#shareValue').val(),
-                    'cbf':function(data){$('#shareContent').append('<p>'+data+'</p>');}
+                    'cbf':function(data){$('#shareContent').append('<p>'+data.content+'</p>');}
                 }
             );
-            $('#shareContent').append('<p>'+'this is share content:'+$('#shareValue').val()+'</p>');
         });
         $("#sendLike").click(function(){
             KLG.like(
                 {
                     'content':'this is like content:'+$('#likeValue').val(),
-                    'cbf':function(data){$('#likeContent').append('<p>'+data+'</p>');}
+                    'cbf':function(data){$('#likeContent').append('<p>'+data.content+'</p>');}
                 }
             );
-            $('#likeContent').append('<p>'+'this is share content:'+$('#likeValue').val()+'</p>');
         });
         setInterval(function(){
             KLG.setHeight($('body').height());
