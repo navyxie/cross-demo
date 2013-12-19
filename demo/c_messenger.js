@@ -75,10 +75,14 @@ var messenger = (function(){
                 msg = msg.data;
             }
             // 剥离消息前缀
-            msg = msg.slice(prefix.length);
-            for(var i = 0; i < self.listenFunc.length; i++){
-                self.listenFunc[i](msg);
+            // modify by navy detect msg type
+            if(typeof msg == 'string'){
+                msg = msg.slice(prefix.length);
+                for(var i = 0; i < self.listenFunc.length; i++){
+                    self.listenFunc[i](msg);
+                }
             }
+            
         };
 
         if ( supportPostMessage ){
@@ -112,37 +116,97 @@ var messenger = (function(){
     return Messenger;
 })();
 var noop = function(){};
+var console = window.console || {log:noop};
+var supportJSON = window.JSON && window.JSON.stringify && window.JSON.parse;
+var doc = document;
+var head = doc.getElementsByTagName("head")[0] || doc.documentElement;
+var loadJs = function(url,cbf) {
+    var jsNode = doc.createElement('script');
+    jsNode.setAttribute("type","text/javascript");
+    jsNode.async = true;
+    jsNode.src = url;
+    head.appendChild(jsNode);
+    var supportOnload = "onload" in jsNode;
+    if(supportOnload){
+        jsNode.onload = onload;
+        jsNode.onerror = function(){
+            console.log('load url:'+url+'failed');
+            onload();
+        }
+    }else{
+        jsNode.onreadystatechange = function(){
+            if (/loaded|complete/.test(jsNode.readyState)) {
+                onload();
+            }
+        }
+    }
+    function onload() {
+        // Ensure only run once and handle memory leak in IE
+        jsNode.onload = jsNode.onerror = jsNode.onreadystatechange = null;
+        head.removeChild(jsNode);
+        // Dereference the node
+        node = null;
+        cbf();
+    }
+}
+// logic code start
 var cbfs = {};
 var isInit = false;
-var console = window.console || {log:noop};
 var msgObj = new messenger('iframe');
 msgObj.addTarget(window.parent,'parent');
 window.KLG = {
+    _jsoncbf : {},
     init:function(){
         var self = this;
+        self._jsoncbf['JSON'] = self._jsoncbf['JSON'] || [];
+        if(!supportJSON){
+            loadJs('http://qzonestyle.gtimg.cn/open/shopping/js/json.js',function(){
+                setTimeout(function() {
+                    if(self._jsoncbf["JSON"] && self._jsoncbf["JSON"].length > 0){
+                        while (self._jsoncbf["JSON"].length) {
+                            var item = self._jsoncbf["JSON"].pop();
+                            item.fn.apply(null, item.args);
+                        }
+                        delete self._jsoncbf["JSON"];
+                    }
+                },0);
+            });
+        }
         if(!isInit){
             isInit = true;
             msgObj.listen(function(msg){
                 msg = JSON.parse(msg);
-                cbfs[msg.name](msg.data);
+                cbfs[msg.name].call(null,msg.data);
             });
         }     
+    },
+    send:function(data){
+        var self = this;
+        if(!supportJSON){
+            self._jsoncbf['JSON'].push({fn: arguments.callee,args: [data]});
+            return;
+        }
+        data = JSON.stringify(data);
+        msgObj.send(data);
     },
     share:function(data){
         var cbfKey = 'share-cbf';
         cbfs[cbfKey] = data.cbf || noop;
         data.cbf = cbfKey;
-        msgObj.send(JSON.stringify({'name':'share','data':data}));
+        this.send({'name':'share','data':data});
+        // msgObj.send(JSON.stringify({'name':'share','data':data}));
     },
     like:function(data){
         var cbfKey = 'like-cbf';
         cbfs[cbfKey] = data.cbf || noop;
         data.cbf = cbfKey;
-        msgObj.send(JSON.stringify({'name':'like','data':data}));
+        this.send({'name':'like','data':data});
+        // msgObj.send(JSON.stringify({'name':'like','data':data}));
     },
     setHeight:function(data){
         data = data || 100;
-        msgObj.send(JSON.stringify({'name':'setHeight','data':{height:data}}));
+        this.send({'name':'setHeight','data':{height:data}});
+        // msgObj.send(JSON.stringify({'name':'setHeight','data':{height:data}}));
     }
 }
 window.KLG.init();

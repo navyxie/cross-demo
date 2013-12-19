@@ -75,9 +75,12 @@ var messenger = (function(){
                 msg = msg.data;
             }
             // 剥离消息前缀
-            msg = msg.slice(prefix.length);
-            for(var i = 0; i < self.listenFunc.length; i++){
-                self.listenFunc[i](msg);
+            // modify by navy detect msg type
+            if(typeof msg == 'string'){
+                msg = msg.slice(prefix.length);
+                for(var i = 0; i < self.listenFunc.length; i++){
+                    self.listenFunc[i](msg);
+                }
             }
         };
 
@@ -113,20 +116,68 @@ var messenger = (function(){
 })();
 var noop = function(){};
 var console = window.console || {log:noop};
+var supportJSON = window.JSON && window.JSON.stringify && window.JSON.parse;
+var doc = document;
+var head = doc.getElementsByTagName("head")[0] || doc.documentElement;
+var loadJs = function(url,cbf) {
+    var jsNode = doc.createElement('script');
+    jsNode.setAttribute("type","text/javascript");
+    jsNode.async = true;
+    jsNode.src = url;
+    head.appendChild(jsNode);
+    var supportOnload = "onload" in jsNode;
+    if(supportOnload){
+        jsNode.onload = onload;
+        jsNode.onerror = function(){
+            console.log('load url:'+url+'failed');
+            onload();
+        }
+    }else{
+        jsNode.onreadystatechange = function(){
+            if (/loaded|complete/.test(jsNode.readyState)) {
+                onload();
+            }
+        }
+    }
+    function onload() {
+        // Ensure only run once and handle memory leak in IE
+        jsNode.onload = jsNode.onerror = jsNode.onreadystatechange = null;
+        head.removeChild(jsNode);
+        // Dereference the node
+        node = null;
+        cbf();
+    }
+}
+// logic code start
 var msgObj = new messenger('parent');
 var isInit = false;// if init messager
 var bFrame = document.getElementById('bFrame');
 msgObj.addTarget(bFrame.contentWindow,'iframe');
 window.KLG = {
     _handler : {},
+    _jsoncbf : {},
     init:function(){
         var self = this;
+        self._jsoncbf['JSON'] = self._jsoncbf['JSON'] || [];
+        if(!supportJSON){
+            loadJs('http://qzonestyle.gtimg.cn/open/shopping/js/json.js',function(){
+                setTimeout(function() {
+                    if(self._jsoncbf["JSON"] && self._jsoncbf["JSON"].length > 0){
+                        while (self._jsoncbf["JSON"].length) {
+                            var item = self._jsoncbf["JSON"].pop();
+                            item.fn.apply(null, item.args);
+                        }
+                        delete self._jsoncbf["JSON"];
+                    }
+                },0);
+            });
+        }
         if(!isInit){
             isInit = true;
             self.initFn();
             msgObj.listen(function(msg){
                 msg = JSON.parse(msg);
-                self['_handler'][msg.name](msg.data);
+                self['_handler'][msg.name].call(self,msg.data);
             });
         }     
     },
@@ -136,15 +187,26 @@ window.KLG = {
         self['_handler']['like'] = this.like,
         self['_handler']['setHeight'] = this.setHeight
     },
+    send:function(data){
+        var self = this;
+        if(!supportJSON){
+            self._jsoncbf['JSON'].push({fn: arguments.callee,args: [data]});
+            return;
+        }
+        data = JSON.stringify(data);
+        msgObj.send(data);
+    },
     share:function(data){
+        this.send({name:data.cbf,data:data});
         // console.log(data);
-        msgObj.send(JSON.stringify({name:data.cbf,data:data}));
+        // msgObj.send(JSON.stringify({name:data.cbf,data:data}));
         //data.cbf(data.content);
         // console.log('share function is called');
     },
     like:function(data){
+        this.send({name:data.cbf,data:data});
         // console.log(data);
-        msgObj.send(JSON.stringify({name:data.cbf,data:data}));
+        // msgObj.send(JSON.stringify({name:data.cbf,data:data}));
         //data.cbf(data.content);
         // console.log('like function is called');
     },
