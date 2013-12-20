@@ -161,6 +161,7 @@ window.KLG = {
         self._jsoncbf['JSON'] = self._jsoncbf['JSON'] || [];
         if(!supportJSON){
             loadJs('http://qzonestyle.gtimg.cn/open/shopping/js/json.js',function(){
+                supportJSON = true;
                 setTimeout(function() {
                     if(self._jsoncbf["JSON"] && self._jsoncbf["JSON"].length > 0){
                         while (self._jsoncbf["JSON"].length) {
