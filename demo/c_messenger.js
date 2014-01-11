@@ -177,7 +177,7 @@ window.KLG = {
             isInit = true;
             msgObj.listen(function(msg){
                 msg = JSON.parse(msg);
-                cbfs[msg.name].call(null,msg.data);
+                cbfs[msg.name].call(self,msg.data);
             });
         }     
     },
